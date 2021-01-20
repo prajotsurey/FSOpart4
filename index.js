@@ -6,6 +6,9 @@ const app = express()
 const cors = require('cors')
 const mongoose = require('mongoose')
 const notesRouter = require('./controllers/blogs')
+const middleware = require('./utils/middleware')
+const { errorHandler } = require('./utils/middleware')
+
 
 mongoose.connect(config.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false, useCreateIndex: true })
   .then(() => {
@@ -16,8 +19,11 @@ mongoose.connect(config.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology
   })
 app.use(cors())
 app.use(express.json())
-
+app.use(middleware.requestLogger)
 app.use('/api/blogs', notesRouter)
+
+app.use(middleware.unknownEndpoint)
+app.use(middleware.errorHandler)
 
 const PORT = process.env.PORT
 app.listen(PORT, () => {
