@@ -10,4 +10,4 @@ content-type: application/json
 
 ##########
 
-GET http://localhost:3001/api/b
+GET http://localhost:3001/api/blogs
