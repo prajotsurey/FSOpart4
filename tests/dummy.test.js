@@ -201,7 +201,7 @@ describe('most blogs',() => {
       __v: 0 
     }]
 
-  test('author with most blogs', () => {
+  test('author with most blogs is', () => {
     const result = listHelper.mostBlogs(blogs)
     expect(result).toEqual(
       {
