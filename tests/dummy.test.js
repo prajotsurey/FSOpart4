@@ -1,4 +1,3 @@
-const { TestScheduler } = require('jest')
 const blog = require('../models/blog')
 const listHelper = require('../utils/list_helper')
 
