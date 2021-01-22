@@ -32,6 +32,24 @@ test('unique identifier is named id', async () => {
   response.body.forEach(blog => expect(blog.id).toBeDefined())
 })
 
+test('blog can be added', async () => {
+  const newBlog = {
+    title: 'Latest Blog',
+    author: 'Latest Author',
+    url: 'Latest URL',
+    likes: 7
+  }
+
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(200)
+    .expect('Content-Type', /application\/json/)
+
+  const blogsAtEnd = await helper.blogsInDB()
+  expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1)
+
+})
 afterAll(()=> {
   mongoose.connection.close()
 })
