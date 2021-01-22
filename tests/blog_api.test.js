@@ -71,6 +71,28 @@ test('blog with missing likes property defaults it to 0', async () => {
   expect(addedBlog.likes).toBe(0)
 
 })
+test('blog with missing title', async () => {
+  const newBlog = {
+    author: 'Latest Author',
+    url: 'Latest URL',
+  }
+
+
+  const response = await api.post('/api/blogs').send(newBlog)
+  expect(response.status).toBe(400)
+  expect(response.body.error).toBe('Blog validation failed: title: Path `title` is required.')
+})
+
+test('blog with missing url', async () => {
+  const newBlog = {
+    title: 'Latest Blog',
+    author: 'Latest Author',
+  }
+
+  const response = await api.post('/api/blogs').send(newBlog)
+  expect(response.status).toBe(400)
+  expect(response.body.error).toBe('Blog validation failed: url: Path `url` is required.')
+})
 
 afterAll(()=> {
   mongoose.connection.close()
