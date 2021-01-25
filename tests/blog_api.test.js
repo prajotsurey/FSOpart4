@@ -5,7 +5,6 @@ const api = supertest(app)
 const Blog = require('../models/blog')
 const helper = require('./test_helper')
 const test_helper = require('./test_helper')
-const { noConflict } = require('lodash')
 
 beforeEach(async () => {
   await Blog.deleteMany({})
@@ -16,17 +15,86 @@ beforeEach(async () => {
   await Promise.all(promiseArray)
 })
 
-test('blogs are returned as json', async () => {
+
+describe('viewing blogs',() => {
+  test('blogs are returned as json', async () => {
   
-  await api
-    .get('/api/blogs')
-    .expect(200)
-    .expect('Content-Type',/application\/json/)
+    await api
+      .get('/api/blogs')
+      .expect(200)
+      .expect('Content-Type',/application\/json/)
+  })
+  
+  test('correct amount of blogs are returned', async () => {
+    const response = await api.get('/api/blogs')
+    expect(response.body).toHaveLength(helper.initialBlogs.length)
+  })
+
 })
 
-test('correct amount of blogs are returned', async () => {
-  const response = await api.get('/api/blogs')
-  expect(response.body).toHaveLength(helper.initialBlogs.length)
+describe('adding blogs', () => {
+  test('blog can be added', async () => {
+    const newBlog = {
+      title: 'Latest Blog',
+      author: 'Latest Author',
+      url: 'Latest URL',
+      likes: 7
+    }
+  
+    await api
+      .post('/api/blogs')
+      .send(newBlog)
+      .expect(200)
+      .expect('Content-Type', /application\/json/)
+  
+    const blogsAtEnd = await helper.blogsInDB()
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1)
+  
+  })
+  
+  test('blog with missing likes property defaults it to 0', async () => {
+    const newBlog = {
+      title: 'Latest Blog',
+      author: 'Latest Author',
+      url: 'Latest URL',
+    }
+  
+    await api
+      .post('/api/blogs')
+      .send(newBlog)
+      .expect(200)
+      .expect('Content-Type', /application\/json/)
+  
+    const blogsAtEnd = await helper.blogsInDB()
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1)
+  
+    const addedBlog = blogsAtEnd.find(blog => blog.title === newBlog.title)
+    expect(addedBlog.likes).toBe(0)
+  
+  })
+  
+  test('blog with missing title', async () => {
+    const newBlog = {
+      author: 'Latest Author',
+      url: 'Latest URL',
+    }
+  
+  
+    const response = await api.post('/api/blogs').send(newBlog)
+    expect(response.status).toBe(400)
+    expect(response.body.error).toBe('Blog validation failed: title: Path `title` is required.')
+  })
+  
+  test('blog with missing url', async () => {
+    const newBlog = {
+      title: 'Latest Blog',
+      author: 'Latest Author',
+    }
+  
+    const response = await api.post('/api/blogs').send(newBlog)
+    expect(response.status).toBe(400)
+    expect(response.body.error).toBe('Blog validation failed: url: Path `url` is required.')
+  })
 })
 
 test('unique identifier is named id', async () => {
@@ -34,82 +102,47 @@ test('unique identifier is named id', async () => {
   response.body.forEach(blog => expect(blog.id).toBeDefined())
 })
 
-test('blog can be added', async () => {
-  const newBlog = {
-    title: 'Latest Blog',
-    author: 'Latest Author',
-    url: 'Latest URL',
-    likes: 7
-  }
 
-  await api
-    .post('/api/blogs')
-    .send(newBlog)
-    .expect(200)
-    .expect('Content-Type', /application\/json/)
-
-  const blogsAtEnd = await helper.blogsInDB()
-  expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1)
-
-})
-
-test('blog with missing likes property defaults it to 0', async () => {
-  const newBlog = {
-    title: 'Latest Blog',
-    author: 'Latest Author',
-    url: 'Latest URL',
-  }
-
-  await api
-    .post('/api/blogs')
-    .send(newBlog)
-    .expect(200)
-    .expect('Content-Type', /application\/json/)
-
-  const blogsAtEnd = await helper.blogsInDB()
-  expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1)
-
-  const addedBlog = blogsAtEnd.find(blog => blog.title === newBlog.title)
-  expect(addedBlog.likes).toBe(0)
-
-})
-test('blog with missing title', async () => {
-  const newBlog = {
-    author: 'Latest Author',
-    url: 'Latest URL',
-  }
-
-
-  const response = await api.post('/api/blogs').send(newBlog)
-  expect(response.status).toBe(400)
-  expect(response.body.error).toBe('Blog validation failed: title: Path `title` is required.')
-})
-
-test('blog with missing url', async () => {
-  const newBlog = {
-    title: 'Latest Blog',
-    author: 'Latest Author',
-  }
-
-  const response = await api.post('/api/blogs').send(newBlog)
-  expect(response.status).toBe(400)
-  expect(response.body.error).toBe('Blog validation failed: url: Path `url` is required.')
-})
-
-test('blog can be deleted', async () => {
-  const initialBlogs = await test_helper.blogsInDB()
-  const blogToDelete = initialBlogs[0]
-  await api
-    .delete(`/api/blogs/${blogToDelete.id}`)
-    .expect(204)
+describe('blog can be deleted', () => {
+  test('blog can be deleted', async () => {
+    const initialBlogs = await test_helper.blogsInDB()
+    const blogToDelete = initialBlogs[0]
+    await api
+      .delete(`/api/blogs/${blogToDelete.id}`)
+      .expect(204)
+    
+    const blogsAtEnd = await test_helper.blogsInDB()
+    expect(blogsAtEnd).toHaveLength(
+      test_helper.initialBlogs.length - 1)
   
-  const blogsAtEnd = await test_helper.blogsInDB()
-  expect(blogsAtEnd).toHaveLength(
-    test_helper.initialBlogs.length - 1)
-
-  const blogs = blogsAtEnd.map(blog => blog.title)
-  expect(blogs).not.toContain(blogToDelete.title)
+    const blogs = blogsAtEnd.map(blog => blog.title)
+    expect(blogs).not.toContain(blogToDelete.title)
   
+  })
+})
+
+describe('blog can be updated', () => {
+  test('blog can be updated', async () => {
+    const initialBlogs = await test_helper.blogsInDB() 
+    const blogToBeUpdated = initialBlogs[0]
+    const blog = {likes : 40}
+  
+    await api
+      .put(`/api/blogs/${blogToBeUpdated.id}`)
+      .send(blog)
+      .expect(200)
+      .expect('Content-Type',/application\/json/)
+  
+    const blogsAtEnd = await test_helper.blogsInDB()
+    const blogTitles = blogsAtEnd.map(blog => blog.title)
+    expect(blogTitles).toContain(blogToBeUpdated.title)
+  
+    blogsAtEnd.forEach(blog => {
+      if(blog.title === blogToBeUpdated.title)
+        expect(blog.likes).toBe(blog.likes)
+    })
+  
+  })
 })
 afterAll(()=> {
   mongoose.connection.close()

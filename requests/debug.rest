@@ -11,3 +11,19 @@ content-type: application/json
 ##########
 
 GET http://localhost:3001/api/blogs
+
+######################
+
+DELETE http://localhost:3001/api/blogs/60082426642e1032f485f196
+
+
+##############3
+PUT http://localhost:3001/api/blogs/6008370fedb2085fabfb70f8
+Content-Type: application/json
+
+{
+  "title": "title1updated",
+  "author": "author1updated",
+  "url": "url1updated",
+  "likes": 40  
+}
