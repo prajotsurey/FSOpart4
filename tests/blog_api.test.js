@@ -4,6 +4,8 @@ const supertest = require('supertest')
 const api = supertest(app)
 const Blog = require('../models/blog')
 const helper = require('./test_helper')
+const test_helper = require('./test_helper')
+const { noConflict } = require('lodash')
 
 beforeEach(async () => {
   await Blog.deleteMany({})
@@ -94,6 +96,21 @@ test('blog with missing url', async () => {
   expect(response.body.error).toBe('Blog validation failed: url: Path `url` is required.')
 })
 
+test('blog can be deleted', async () => {
+  const initialBlogs = await test_helper.blogsInDB()
+  const blogToDelete = initialBlogs[0]
+  await api
+    .delete(`/api/blogs/${blogToDelete.id}`)
+    .expect(204)
+  
+  const blogsAtEnd = await test_helper.blogsInDB()
+  expect(blogsAtEnd).toHaveLength(
+    test_helper.initialBlogs.length - 1)
+
+  const blogs = blogsAtEnd.map(blog => blog.title)
+  expect(blogs).not.toContain(blogToDelete.title)
+  
+})
 afterAll(()=> {
   mongoose.connection.close()
 })
