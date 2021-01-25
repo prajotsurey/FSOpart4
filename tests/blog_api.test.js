@@ -5,6 +5,8 @@ const api = supertest(app)
 const Blog = require('../models/blog')
 const helper = require('./test_helper')
 const test_helper = require('./test_helper')
+const User = require('../models/user')
+const bcrypt = require('bcrypt')
 
 beforeEach(async () => {
   await Blog.deleteMany({})
@@ -144,6 +146,59 @@ describe('blog can be updated', () => {
   
   })
 })
+
+describe('user tests', () => {
+
+  beforeEach(async () => {
+    await User.deleteMany({})
+
+    const passwordHash = await bcrypt.hash('sekret', 10)
+    const user = new User({username: 'initialusername', passwordHash})
+
+    await user.save()
+  })
+
+  test('add a user with unique username', async () => {
+    const usersAtStart = await test_helper.usersInDB()
+    console.log(usersAtStart)
+    const user = {
+      username: 'testusername',
+      name: 'testname',
+      password: 'testpassword'
+    }
+    await api
+      .post('/api/users/')
+      .send(user)
+      .expect(200)
+      .expect('Content-Type',/application\/json/)
+
+    const usersAtEnd = await test_helper.usersInDB()
+    expect(usersAtEnd).toHaveLength(usersAtStart.length + 1)
+
+    const usernames = usersAtEnd.map(user => user.username)
+    expect(usernames).toContain(user.username)
+  })
+
+  test('cannot add a user with repeated username', async () => {
+    
+    const usersAtStart = await test_helper.usersInDB()
+    const user = {
+      username: 'initialusername',
+      name: 'testname',
+      password: 'testpassword',
+    }
+    const result = await api
+      .post('/api/users/')
+      .send(user)
+      .expect(400)
+
+    expect (result.body.error).toContain('`username` to be unique')
+    const usersAtEnd = await test_helper.usersInDB()
+    expect(usersAtEnd).toHaveLength(usersAtStart.length)
+
+  })
+})
+
 afterAll(()=> {
   mongoose.connection.close()
 })

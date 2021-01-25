@@ -8,9 +8,19 @@ content-type: application/json
   "likes": 4
 }
 
+#########
+POST http://localhost:3001/api/users HTTP/1.1
+content-type: application/json
+
+{
+  "username":"username1",
+  "name":"name1",
+  "password":"password1"
+}
+
 ##########
 
-GET http://localhost:3001/api/blogs
+GET http://localhost:3001/api/users
 
 ######################
 
