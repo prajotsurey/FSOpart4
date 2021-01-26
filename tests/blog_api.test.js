@@ -197,6 +197,42 @@ describe('user tests', () => {
     expect(usersAtEnd).toHaveLength(usersAtStart.length)
 
   })
+  test('cannot add user with a short username', async () => {
+    const usersAtStart = await test_helper.usersInDB()
+    const user = {
+      username:'as',
+      name:'name1',
+      password:'password'
+    }
+
+    const result = await api
+      .post('/api/users/')
+      .send(user)
+      .expect(400)
+
+    expect(result.body.error).toContain('is shorter than the minimum allowed length (3).')
+    
+    const usersAtEnd = await test_helper.usersInDB()
+    expect(usersAtEnd).toHaveLength(usersAtStart.length)
+  })
+  test('cannot add user with a short password', async () => {
+    const usersAtStart = await test_helper.usersInDB()
+    const user = {
+      username:'abas',
+      name:'name1',
+      password:'te'
+    }
+
+    const result = await api
+      .post('/api/users/')
+      .send(user)
+      .expect(400)
+
+    expect(result.body.error).toContain('password must be atleast 3 characters long')
+
+    const usersAtEnd = await test_helper.usersInDB()
+    expect(usersAtEnd).toHaveLength(usersAtStart.length)
+  })
 })
 
 afterAll(()=> {
